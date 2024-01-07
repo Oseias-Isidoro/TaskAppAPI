@@ -1,0 +1,11 @@
+Auth Controller (Http\Controllers\AuthController)
+ [x] User register validation with data set "without name"
+ [x] User register validation with data set "without email"
+ [x] User register validation with data set "without password"
+ [x] User register validation with data set "with email that exist"
+ [x] Register user
+ [x] User login
+ [x] User login validation with data set "without email"
+ [x] User login validation with data set "without password"
+ [x] User login validation with data set "without data"
+
