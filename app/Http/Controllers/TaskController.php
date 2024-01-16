@@ -4,22 +4,33 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\EditTaskRequest;
 use App\Http\Requests\StoreTaskRequest;
-use App\Models\Task;
+use App\Interfaces\TaskRepositoryInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class TaskController extends Controller
 {
+    private TaskRepositoryInterface $taskRepository;
+
+    public function __construct(TaskRepositoryInterface $taskRepository)
+    {
+        $this->taskRepository = $taskRepository;
+    }
+
     public function index(): JsonResponse
     {
-        return response()->json(Auth::user()->tasks);
+        return response()
+            ->json($this->taskRepository->getAllUserTasks(Auth::user()->id));
     }
 
     public function store(StoreTaskRequest $request): JsonResponse
     {
         try {
-            $task = Auth::user()->tasks()
-                ->create($request->validated());
+            $data = $request->validated();
+            $data['user_id'] = Auth::user()->id;
+
+            $task = $this->taskRepository->createTask($data);
         } catch (\Exception $exception)
         {
             return response()->json([
@@ -29,18 +40,21 @@ class TaskController extends Controller
             ], 500);
         }
 
+        return response()->json($task, Response::HTTP_CREATED);
+    }
+
+    public function update(EditTaskRequest $request, $task): JsonResponse
+    {
+        $task = $this->taskRepository
+            ->updateTask($task, $request->validated());
+
         return response()->json($task);
     }
 
-    public function update(EditTaskRequest $request, Task $task): JsonResponse
+    public function destroy($task): JsonResponse
     {
-        $task->update($request->validated());
-        return response()->json($task->fresh());
-    }
+        $this->taskRepository->deleteTask($task);
 
-    public function destroy(Task $task): JsonResponse
-    {
-        $task->delete();
         return response()->json([
             'success' => [
                 'message' => 'Task deleted successful'
